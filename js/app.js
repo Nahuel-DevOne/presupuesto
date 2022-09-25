@@ -24,12 +24,17 @@ class Presupuesto{
     }
 
     // metodo para ir restando del presupuesto actual
-    calcularRestante(cantidad = 0) {
+    calcularRestante() {
         const gastado = this.gastos.reduce((total, gasto) => total + gasto.cantidad, 0);
         this.restante = this.presupuesto - gastado;
-        console.log(this.restante);
     }
 
+    // eliminar gasto del objeto
+    eliminarGasto(id) {
+        // creando un nuevo arreglo con los gastos que no tengan el id que se pasa por parametro
+        this.gastos = this.gastos.filter(gasto => gasto.id !== id);
+        this.calcularRestante();
+    }
 
 }
 
@@ -63,7 +68,7 @@ class UI{
         }, 3000);
     }
 
-    agregarGastoListado(gastos){
+    mostrarGastos(gastos){
         // elimina el html previo
         this.limpiarHTML();
         // iterar sobre los gastos
@@ -87,6 +92,7 @@ class UI{
             // agregando texto al boton, y usando entidades html
             // si usara textContent, no se vería el icono, tiene que ser innerHTML
             btnBorrar.innerHTML = 'Borrar &times;';
+            // agregando onClick al btnBorrar para borrar según el id
             btnBorrar.onclick = () => {
                 eliminarGasto(id);
             }
@@ -107,6 +113,31 @@ class UI{
 
     actualizarRestante(restante){
         document.querySelector('#restante').textContent = restante;
+    }
+
+    comprobarPresupuesto(presupuestoObj){
+        const {presupuesto, restante} = presupuestoObj;
+        const restanteDiv = document.querySelector('.restante');
+        // comprobar 25%
+        // ya gastó más del 75%
+        if((presupuesto / 4) > restante){
+            restanteDiv.classList.remove('alert-success', 'alert-warning');
+            restanteDiv.classList.add('alert-danger');
+        // comprobar el 50%, ya gastó más del 50%    
+        } else if((presupuesto / 2) > restante){
+            restanteDiv.classList.remove('alert-success');
+            restanteDiv.classList.add('alert-warning');
+        // si el presupuesto es mayor al 50%, todavía no gastó el 50%    
+        } else {
+            restanteDiv.classList.remove('alert-danger', 'alert-warning');
+            restanteDiv.classList.add('alert-success');
+        }
+
+        // si el total es 0 o menor
+        if(restante <= 0){
+            ui.imprimirAlerta('El presupuesto se ha agotado', 'error');
+            formulario.querySelector('button[type="submit"]').disabled = true;
+        }
     }
 
 }
@@ -157,9 +188,24 @@ function agregarGasto(e) {
     // aplicando destructuring
     const { gastos, restante } = presupuesto;
     // Imprimir los gastos
-    ui.agregarGastoListado(gastos);
+    ui.mostrarGastos(gastos);
     // Actualizar el restante
     ui.actualizarRestante(restante);
+    // Comprobar el presupuesto
+    ui.comprobarPresupuesto(presupuesto);
     // Reinicia el formulario
     formulario.reset();
+}
+
+function eliminarGasto(id){
+    // Elimina los gastos del objeto
+    presupuesto.eliminarGasto(id);
+    // Elimina los gastos del html
+    const { gastos, restante } = presupuesto;
+    // Imprimir los gastos
+    ui.mostrarGastos(gastos);
+    // Actualizar el restante
+    ui.actualizarRestante(restante);
+    // Comprobar el presupuesto
+    ui.comprobarPresupuesto(presupuesto);
 }
